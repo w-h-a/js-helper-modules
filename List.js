@@ -204,13 +204,6 @@ const upto =
                 : upto (m, n - 1) (insertAtIndex (newList) (0) (n));
 
 
-const prod =
-    list =>
-        !list.head
-            ? 1
-            : list.head.data * (prod (new LinkedList (list.head.next)));
-
-
 const maxOfList =
     list =>
         !list.head
@@ -328,7 +321,6 @@ Object.assign (module.exports, {
     arrOfList,
     nLength,
     upto,
-    prod,
     maxOfList,
     explode,
     implode,
