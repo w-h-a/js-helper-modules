@@ -28,6 +28,45 @@ const lift =
             : transient.value;
 
 
+const leftRem =
+    tree =>
+        tree.left instanceof Leaf && tree.right instanceof Leaf
+            ? [ tree.value, new Leaf () ]
+            : (([ w, t ]) =>
+                  [ w
+                  , new Branch (tree.value, tree.right, t)
+                  ]
+              ) (leftRem (tree.left));
+
+
+const siftDown =
+    (priority, tree1, tree2) =>
+        tree1 instanceof Leaf && tree2 instanceof Leaf
+            ? new Branch (priority, new Leaf (), new Leaf ())
+            : tree2 instanceof Leaf
+                ? priority <= tree1.value
+                    ? new Branch (priority, tree1, new Leaf ())
+                    : new Branch (tree1.value, new Branch (priority, new Leaf (), new Leaf ()), new Leaf ())
+                : priority <= tree1.value && priority <= tree2.value
+                    ? new Branch (priority, tree1, tree2)
+                    : tree1.value <= tree2.value
+                        ? new Branch (tree1.value, siftDown (priority, tree1.left, tree1.right), tree2)
+                        : new Branch (tree2.value, tree1, siftDown (priority, tree2.left, tree2.right));
+
+
+const heapify =
+    (n, arr) =>
+        n === 0
+            ? [ new Leaf (), arr ]
+            : (([ t1, arr1 ]) =>
+                  (([ t2, arr2 ]) =>
+                      [ siftDown (arr[0], t1, t2)
+                      , arr2
+                      ]
+                  ) (heapify (Math.floor ((n - 1) / 2), arr1))
+              ) (heapify (Math.floor (n / 2), arr.slice (1)));
+
+
 // exposed
 const size =
     tree =>
@@ -115,7 +154,7 @@ const destroy =
                             : new Branch ( lift (tree.right)
                                          , tree.left
                                          , rightOf (tree.right)
-                                         ); // not proud of this
+                                         ); // will fix
 
 
 const max =
@@ -125,17 +164,84 @@ const max =
             : tree.value;
 
 
+const isEmpty =
+    tree =>
+        tree instanceof Leaf
+            ? true
+            : tree instanceof Branch
+                ? false
+                : null;
+
+
+// heaps only
+const heapInsert =
+    (priority, tree) =>
+        tree instanceof Leaf
+            ? new Branch (priority, new Leaf (), new Leaf ())
+            : priority <= tree.value
+                ? new Branch ( priority
+                             , heapInsert (tree.value, tree.right)
+                             , tree.left
+                             )
+                : new Branch ( tree.value
+                             , heapInsert (priority, tree.right)
+                             , tree.left
+                             );
+
+
+const delMin =
+    tree =>
+        tree instanceof Leaf
+            ? new Error ("empty queue")
+            : tree.left instanceof Leaf
+                ? new Leaf ()
+                : (([ w, t ]) =>
+                      siftDown (w, tree.right, t)
+                  ) (leftRem (tree.left));
+
+
+const min =
+    tree =>
+        tree.value;
+
+
+const heapOfArr =
+    arr =>
+        heapify (arr.length, arr)[0];
+
+
+const arrOfHeap =
+    tree =>
+        tree instanceof Leaf
+            ? []
+            : [ tree.value
+              , ...arrOfHeap (delMin (tree))
+              ];
+
+
+const heapSort =
+    arr =>
+        arrOfHeap (heapOfArr (arr));
+
+
 Object.assign (module.exports, {
     Branch,
     Leaf,
-    balanced,
+    arrOfHeap,
+    balanced, // treeOfArr
     completeTree,
     depth,
+    delMin, // delete for heaps
     destroy, // delete
-    inorder,
+    heapInsert, // insert for heaps
+    heapOfArr,
+    heapSort,
+    inorder, // arrOfTree
     insert, // insert
+    isEmpty,
     lookup, // search
     max,
+    min, // heaps
     reflect,
     size,
 });
